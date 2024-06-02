@@ -1,9 +1,22 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs/promises');
+const express = require('express')
+const app = express()
+
+app.use(express.static("public"))
+
+app.get('/', (req, res)=>{
+    res.render('index')
+})
+
+app.listen(3000, ()=>{
+    console.log('Server listening on port 3000 \nhttp://localhost:3000/');
+
+});
 
 
 async function start(){
-    const browser = await puppeteer.launch()
+    const browser = await puppeteer.launch({headless: false})
     const page = await browser.newPage()
     await page.goto('https://central.carleton.ca/prod/bwysched.p_select_term?wsea_code=EXT')
 
@@ -38,8 +51,8 @@ async function start(){
 
     console.log('New Page URL:', page.url());
     //PRINT STATUS
-    const info = await page.$eval('font[color="red"]', el => el.textContent)
-    console.log(info)
+    const info = await page.$eval('div > table > tbody > tr', el => el.innerText)
+    console.log(info.split("\t")[1])
 
 }
 
