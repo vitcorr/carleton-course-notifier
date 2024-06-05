@@ -3,10 +3,21 @@ const fs = require('fs/promises');
 const express = require('express')
 const app = express()
 
+//middleware
 app.use(express.static("public"))
+app.use(express.json({limit: '1mb'}))
 
+
+//routes
 app.get('/', (req, res)=>{
     res.render('index')
+})
+
+app.post('/', (req, res)=>{
+    console.log(req.body);
+    start(req.body.term, req.body.crn)
+    res.sendStatus(200);
+
 })
 
 app.listen(3000, ()=>{
@@ -15,10 +26,15 @@ app.listen(3000, ()=>{
 });
 
 
-async function start(){
+async function start(term, crn){
     const browser = await puppeteer.launch({headless: false})
     const page = await browser.newPage()
     await page.goto('https://central.carleton.ca/prod/bwysched.p_select_term?wsea_code=EXT')
+
+    //inputs
+    //summer: 202420, fall: 202430, winter: 202510 
+    // const term = '202510';
+    // const crn = '11247';
 
     const names = await page.evaluate(() =>{
         return Array.from(document.querySelectorAll("#term_code > option")).map(x => x.textContent)
@@ -26,8 +42,8 @@ async function start(){
     await fs.writeFile("name.txt", names.join("\r\n"))
 
     //Select the term
-    await page.select('select[name="term_code"]', '202420');
-    await page.screenshot({path: "amazing.png"})
+    await page.select('select[name="term_code"]', term);
+    await page.screenshot({path: "screenshots/amazing.png"})
 
     // Click the submit button
     await Promise.all([
@@ -36,11 +52,10 @@ async function start(){
     ]);
     
 
-    await page.screenshot({path: "amazing.png"})
 
     //NEXT PAGE 
     //CRn DINOSAURS = 21525
-    await page.type("#crn_id", '21525')
+    await page.type("#crn_id", crn)
     page.click('input[type="submit"][value="Search"]')
 
     // Click the SEARCH button
@@ -52,22 +67,10 @@ async function start(){
     console.log('New Page URL:', page.url());
     //PRINT STATUS
     const info = await page.$eval('div > table > tbody > tr', el => el.innerText)
-    console.log(info.split("\t")[1])
+    const registrationStatus = info.split("\t")[1]
+    console.log(info)
 
+    //close puppeteer browser
+    browser.close()
 }
 
-function main(){
-    console.log('ENTER A SEMESTER /n 1 for Fall /n 2 for Winter 3 for Summer');
-    console.log('1')
-    switch(semester) {
-        case x:
-          // code block
-          break;
-        case y:
-          // code block
-          break;
-        default:
-          // code block
-      }
-}
-start()

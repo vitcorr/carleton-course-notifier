@@ -7,5 +7,17 @@ function submitButton(){
     // btn.innerHTML = term + crn
     // document.body.appendChild(btn);
     console.log(term)
+    const data = {term, crn};
 
+    fetch('http://localhost:3000/', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(res => res.text())
+    .then(data => console.log(data))
+    .catch(err => console.log('Error: ',err));
 }
