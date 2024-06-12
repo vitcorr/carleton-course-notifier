@@ -1,16 +1,46 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs/promises');
 const express = require('express')
+const client = require('./database.js')
 const app = express()
 
 //middleware
 app.use(express.static("public"))
 app.use(express.json({limit: '1mb'}))
 
+app.listen(3000, ()=>{
+    console.log('Server listening on port 3000 \nhttp://localhost:3000/');
+
+});
+
+//connect database
+client.connect()
+.then(() => console.log('Connected to PostgreSQL database'))
+.catch(error => console.error('Error connecting to the database:', error));
+
 
 //routes
 app.get('/', (req, res)=>{
     res.render('index')
+})
+
+//test database outputs
+/*this doesnt work for now, use async method*/
+// app.get('/database', (req, res)=>{
+//     console.log('hello')
+//     client.query(`SELECT * FROM users`, (err, result)=>{
+//         if(!err){
+//             res.send(result.rows)
+//         }
+//     });
+//     client.end();
+// })
+
+app.get('/database', async(req, res)=>{
+    console.log('hello')
+    const result1 = await client.query('SELECT * FROM users');
+    res.send(result1.rows)
+    client.end();
 })
 
 app.post('/', (req, res)=>{
@@ -20,10 +50,7 @@ app.post('/', (req, res)=>{
 
 })
 
-app.listen(3000, ()=>{
-    console.log('Server listening on port 3000 \nhttp://localhost:3000/');
 
-});
 
 
 async function start(term, crn){
