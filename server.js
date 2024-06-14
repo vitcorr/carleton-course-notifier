@@ -26,27 +26,44 @@ app.get('/', (req, res)=>{
 
 //test database outputs
 /*this doesnt work for now, use async method*/
-// app.get('/database', (req, res)=>{
-//     console.log('hello')
-//     client.query(`SELECT * FROM users`, (err, result)=>{
-//         if(!err){
-//             res.send(result.rows)
-//         }
-//     });
-//     client.end();
-// })
-
-app.get('/database', async(req, res)=>{
+app.get('/database', (req, res)=>{
     console.log('hello')
-    const result1 = await client.query('SELECT * FROM users');
-    res.send(result1.rows)
-    client.end();
+    client.query(`SELECT * FROM users`, (err, result)=>{
+        console.log('pook')
+        if(err){
+            res.send("there was an error")
+            console.log(result.rows)
+            return;
+        }
+        res.send(result.rows)
+
+    });
+    //client.end();
 })
 
-app.post('/', (req, res)=>{
+// app.get('/database', async(req, res)=>{
+//     console.log('hello')
+//     const result1 = await client.query('SELECT * FROM users');
+//     res.send(result1.rows)
+//     //client.end();
+// })
+
+app.post('/', async(req, res)=>{
     console.log(req.body);
-    start(req.body.term, req.body.crn)
+    const user = req.body;
+    let insertQuery = `INSERT INTO Users (name, email) VALUES('${user.name}', '${user.email}')`
+    //start(req.body.term, req.body.crn)
     res.sendStatus(200);
+    client.query(insertQuery, (err, result) => {
+        if (!err) {
+            console.log("Insertion Succesful");
+            return;
+        }
+        //res.send("there was an error in insertion");
+        console.log(err.message);
+
+
+    });
 
 })
 
