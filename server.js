@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs/promises');
 const express = require('express')
-const client = require('./database.js')
+const pool = require('./database.js')
 const app = express()
 
 //middleware
@@ -14,9 +14,9 @@ app.listen(3000, ()=>{
 });
 
 //connect database
-client.connect()
-.then(() => console.log('Connected to PostgreSQL database'))
-.catch(error => console.error('Error connecting to the database:', error));
+// client.connect()
+// .then(() => console.log('Connected to PostgreSQL database'))
+// .catch(error => console.error('Error connecting to the database:', error));
 
 
 //routes
@@ -28,7 +28,7 @@ app.get('/', (req, res)=>{
 /*this doesnt work for now, use async method*/
 app.get('/database', (req, res)=>{
     console.log('hello')
-    client.query(`SELECT * FROM users`, (err, result)=>{
+    client.query(`SELECT * FROM courses`, (err, result)=>{
         console.log('pook')
         if(err){
             res.send("there was an error")
@@ -36,6 +36,7 @@ app.get('/database', (req, res)=>{
             return;
         }
         res.send(result.rows)
+        console.log(result.rows)
 
     });
     //client.end();
@@ -68,7 +69,33 @@ app.post('/', async(req, res)=>{
 })
 
 
+//transactions
+async function courseRegistration(userName, userEmail, crn){
+    const client = await pool.connect();
+    try{
+        await client.query('BEGIN');
 
+        //Insert user into Users table
+        const userText = 'INSERT INTO Users(name, email) VALUES ($1, $2) RETURNING user_id';
+        const userValues = [userName, userEmail];
+        const resUser = await client.query(userText, userValues);
+        const userId = resUser.rows[0].user_id;
+        console.log(userId)
+
+        // Insert registration into Registrations table
+        const insertRegistrationText = 'INSERT INTO Registrations (user_id, crn) VALUES ($1, $2)';
+        const insertRegistrationValues = [userId, crn];
+        await client.query(insertRegistrationText, insertRegistrationValues);
+
+        await client.query('COMMIT');
+
+    }   catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    }   finally {
+        client.release();
+    }
+}
 
 async function start(term, crn){
     const browser = await puppeteer.launch({headless: false})
@@ -118,3 +145,7 @@ async function start(term, crn){
     browser.close()
 }
 
+// Example usage:
+courseRegistration('Victor', 'victor@example.com', 22)
+  .then(() => console.log('User registered for the course'))
+  .catch(e => console.error('Error registering user for the course', e.stack));
