@@ -70,17 +70,40 @@ app.post('/', async(req, res)=>{
 
 
 //transactions
+//currently fixing foreign key contraint bug
 async function courseRegistration(userName, userEmail, crn){
     const client = await pool.connect();
     try{
         await client.query('BEGIN');
 
-        //Insert user into Users table
-        const userText = 'INSERT INTO Users(name, email) VALUES ($1, $2) RETURNING user_id';
-        const userValues = [userName, userEmail];
-        const resUser = await client.query(userText, userValues);
-        const userId = resUser.rows[0].user_id;
-        console.log(userId)
+        //Check if user already exists
+        const findUserText = 'SELECT user_id FROM Users WHERE email = $1';
+        const findUserValues = [userEmail];
+        const resUser = await client.query(findUserText, findUserValues);
+
+        let userId;
+        if (resUser.rows.length > 0) {
+            userId = resUser.rows[0].user_id;
+        } else{
+            //Insert user into Users table
+            const userText = 'INSERT INTO Users(name, email) VALUES ($1, $2) RETURNING user_id';
+            const userValues = [userName, userEmail];
+            const resNewUser = await client.query(userText, userValues);
+            userId = resNewUser.rows[0].user_id;
+            console.log(userId)
+        }
+        
+        // Check if the course already exists
+        const findCourseText = 'SELECT crn FROM Courses WHERE crn = $1';
+        const findCourseValues = [crn];
+        const resCourse = await client.query(findCourseText, findCourseValues);
+
+        if (resCourse.rows.length === 0) {
+            // Insert course into Courses table
+            const insertCourseText = 'INSERT INTO Courses (crn, name, semester, status) VALUES ($1, $2, $3, $4)';
+            const insertCourseValues = [crn, courseName, semester, 'CLOSED']; // Default to 'CLOSED'
+            await client.query(insertCourseText, insertCourseValues);
+        }
 
         // Insert registration into Registrations table
         const insertRegistrationText = 'INSERT INTO Registrations (user_id, crn) VALUES ($1, $2)';
@@ -114,7 +137,7 @@ async function start(term, crn){
 
     //Select the term
     await page.select('select[name="term_code"]', term);
-    await page.screenshot({path: "screenshots/amazing.png"})
+    //await page.screenshot({path: "screenshots/amazing.png"})
 
     // Click the submit button
     await Promise.all([
@@ -146,6 +169,9 @@ async function start(term, crn){
 }
 
 // Example usage:
-courseRegistration('Victor', 'victor@example.com', 22)
-  .then(() => console.log('User registered for the course'))
-  .catch(e => console.error('Error registering user for the course', e.stack));
+// const term = '202510';
+    // const crn = '11247';
+start("202510", "11247");
+// courseRegistration('Victor', 'victor@example.com', 22)
+//   .then(() => console.log('User registered for the course'))
+//   .catch(e => console.error('Error registering user for the course', e.stack));
