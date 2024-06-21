@@ -54,16 +54,22 @@ app.post('/', async(req, res)=>{
     const user = req.body;
     //let insertQuery = `INSERT INTO Users (name, email) VALUES('${user.name}', '${user.email}')`
     //start(req.body.term, req.body.crn)
-    courseRegistration(user.name, user.email, user.crn, "", user.term)
+
+    //CHECK IF REQUEST IS VALID
+    const check = await start(user.term, user.crn);
+    if (check[0] === "Open" || check[0] === "Closed") {
+        courseRegistration(user.name, user.email, user.crn, check[1], user.term)
         .then(() => console.log('User registered for the course'))
         .catch(e => console.error('Error registering user for the course', e.stack));
     res.sendStatus(200);
-
+    }
+    else{    
+        console.log("invalid crn/term combo")
+    }
 })
 
 
 //transactions
-//NEXT FIX: make usre crn matches term before saving to database
 async function courseRegistration(userName, userEmail, crn, courseName, term){
     const client = await pool.connect();
     try{
@@ -160,14 +166,18 @@ async function start(term, crn){
     console.log('New Page URL:', page.url());
     //PRINT STATUS
     const info = await page.$eval('div > table > tbody > tr', el => el.innerText)
-    const registrationStatus = info.split("\t")[1]
-    console.log(info)
+    const registrationStatus = [info.split("\t")[1], info.split("\t")[5]]
+    // console.log(info)
+    // console.log(registrationStatus)
 
     //close puppeteer browser
-    browser.close()
+    //browser.close()
+    return registrationStatus;
 }
 
 // Example usage:
 // const term = '202510';
     // const crn = '11247';
-//start("202510", "11247");
+    // (async ()=>{
+    //     console.log(await start("202430", "11247"));
+    // }) ();
