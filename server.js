@@ -52,26 +52,19 @@ app.get('/database', (req, res)=>{
 app.post('/', async(req, res)=>{
     console.log(req.body);
     const user = req.body;
-    let insertQuery = `INSERT INTO Users (name, email) VALUES('${user.name}', '${user.email}')`
+    //let insertQuery = `INSERT INTO Users (name, email) VALUES('${user.name}', '${user.email}')`
     //start(req.body.term, req.body.crn)
+    courseRegistration(user.name, user.email, user.crn, "", user.term)
+        .then(() => console.log('User registered for the course'))
+        .catch(e => console.error('Error registering user for the course', e.stack));
     res.sendStatus(200);
-    client.query(insertQuery, (err, result) => {
-        if (!err) {
-            console.log("Insertion Succesful");
-            return;
-        }
-        //res.send("there was an error in insertion");
-        console.log(err.message);
-
-
-    });
 
 })
 
 
 //transactions
-//currently fixing foreign key contraint bug
-async function courseRegistration(userName, userEmail, crn){
+//NEXT FIX: make usre crn matches term before saving to database
+async function courseRegistration(userName, userEmail, crn, courseName, term){
     const client = await pool.connect();
     try{
         await client.query('BEGIN');
@@ -84,12 +77,14 @@ async function courseRegistration(userName, userEmail, crn){
         let userId;
         if (resUser.rows.length > 0) {
             userId = resUser.rows[0].user_id;
+            console.log("this user already exists...atempting course insertion")
         } else{
             //Insert user into Users table
             const userText = 'INSERT INTO Users(name, email) VALUES ($1, $2) RETURNING user_id';
             const userValues = [userName, userEmail];
             const resNewUser = await client.query(userText, userValues);
             userId = resNewUser.rows[0].user_id;
+            console.log('new user inserted')
             console.log(userId)
         }
         
@@ -100,9 +95,13 @@ async function courseRegistration(userName, userEmail, crn){
 
         if (resCourse.rows.length === 0) {
             // Insert course into Courses table
-            const insertCourseText = 'INSERT INTO Courses (crn, name, semester, status) VALUES ($1, $2, $3, $4)';
-            const insertCourseValues = [crn, courseName, semester, 'CLOSED']; // Default to 'CLOSED'
+            const insertCourseText = 'INSERT INTO Courses (crn, name, term, status) VALUES ($1, $2, $3, $4)';
+            const insertCourseValues = [crn, courseName, term, 'CLOSED']; // Default to 'CLOSED'
             await client.query(insertCourseText, insertCourseValues);
+            console.log('new course inserted to database')
+
+        }else{
+            console.log('this course already exists in database so no insertion')
         }
 
         // Insert registration into Registrations table
@@ -171,7 +170,4 @@ async function start(term, crn){
 // Example usage:
 // const term = '202510';
     // const crn = '11247';
-start("202510", "11247");
-// courseRegistration('Victor', 'victor@example.com', 22)
-//   .then(() => console.log('User registered for the course'))
-//   .catch(e => console.error('Error registering user for the course', e.stack));
+//start("202510", "11247");
