@@ -23,6 +23,6 @@ function submitButton(){
         body: JSON.stringify(data),
     })
     .then(res => res.text())
-    .then(data => console.log(data))
+    .then(data => alert(data))
     .catch(err => console.log('Error: ',err));
 }

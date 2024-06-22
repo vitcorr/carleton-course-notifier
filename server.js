@@ -50,6 +50,7 @@ app.get('/database', (req, res)=>{
 // })
 
 app.post('/', async(req, res)=>{
+    console.log('NEW INCOMING REGISTRATION ATTEMPT')
     console.log(req.body);
     const user = req.body;
     //let insertQuery = `INSERT INTO Users (name, email) VALUES('${user.name}', '${user.email}')`
@@ -58,12 +59,21 @@ app.post('/', async(req, res)=>{
     //CHECK IF REQUEST IS VALID
     const check = await start(user.term, user.crn);
     if (check[0] === "Open" || check[0] === "Closed") {
-        courseRegistration(user.name, user.email, user.crn, check[1], user.term)
-        .then(() => console.log('User registered for the course'))
-        .catch(e => console.error('Error registering user for the course', e.stack));
-    res.sendStatus(200);
+        try {
+            const registrationAdded = await courseRegistration(user.name, user.email, user.crn, check[1], user.term)
+            if (registrationAdded) {
+              res.send('User registered for the course');
+            } else {
+              res.send('You already have an active reminder for this course');
+            }
+          } catch (e) {
+            res.status(500).send('Error registering user for the course');
+            console.error('Error registering user for the course', e.stack);
+          }
+        
     }
     else{    
+        res.send('Invalid CRN or TERM. Make sure the CRN is correct and matches the Semester');
         console.log("invalid crn/term combo")
     }
 })
@@ -72,6 +82,8 @@ app.post('/', async(req, res)=>{
 //transactions
 async function courseRegistration(userName, userEmail, crn, courseName, term){
     const client = await pool.connect();
+    let registrationAdded = false;
+
     try{
         await client.query('BEGIN');
 
@@ -110,10 +122,21 @@ async function courseRegistration(userName, userEmail, crn, courseName, term){
             console.log('this course already exists in database so no insertion')
         }
 
+        // Check if the registration already exists
+        const findRegistrationText = 'SELECT registration_id FROM Registrations WHERE user_id = $1 AND crn = $2';
+        const findRegistrationValues = [userId, crn];
+        const resRegistration = await client.query(findRegistrationText, findRegistrationValues);
+
+        if (resRegistration.rows.length === 0) {
         // Insert registration into Registrations table
         const insertRegistrationText = 'INSERT INTO Registrations (user_id, crn) VALUES ($1, $2)';
         const insertRegistrationValues = [userId, crn];
         await client.query(insertRegistrationText, insertRegistrationValues);
+        registrationAdded = true;
+        }
+        else{
+            console.log('this user already registered in this course')
+        }
 
         await client.query('COMMIT');
 
@@ -123,10 +146,12 @@ async function courseRegistration(userName, userEmail, crn, courseName, term){
     }   finally {
         client.release();
     }
+    return registrationAdded;
+
 }
 
 async function start(term, crn){
-    const browser = await puppeteer.launch({headless: false})
+    const browser = await puppeteer.launch({headless: true})
     const page = await browser.newPage()
     await page.goto('https://central.carleton.ca/prod/bwysched.p_select_term?wsea_code=EXT')
 
@@ -163,7 +188,7 @@ async function start(term, crn){
         page.waitForNavigation()
     ]);
 
-    console.log('New Page URL:', page.url());
+    //console.log('New Page URL:', page.url());
     //PRINT STATUS
     const info = await page.$eval('div > table > tbody > tr', el => el.innerText)
     const registrationStatus = [info.split("\t")[1], info.split("\t")[5]]
