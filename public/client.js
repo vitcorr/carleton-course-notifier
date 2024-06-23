@@ -1,5 +1,3 @@
-const e = require("express");
-
 
 function submitButton(){
     const term = document.getElementById('term').value

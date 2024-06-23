@@ -78,6 +78,8 @@ app.post('/', async(req, res)=>{
     }
 })
 
+//MAILING LIST
+let mailing_list = []
 
 //transactions
 async function courseRegistration(userName, userEmail, crn, courseName, term){
@@ -191,12 +193,13 @@ async function start(term, crn){
     //console.log('New Page URL:', page.url());
     //PRINT STATUS
     const info = await page.$eval('div > table > tbody > tr', el => el.innerText)
+    //registration status = [course status, course name ]
     const registrationStatus = [info.split("\t")[1], info.split("\t")[5]]
     // console.log(info)
     // console.log(registrationStatus)
 
     //close puppeteer browser
-    //browser.close()
+    browser.close()
     return registrationStatus;
 }
 
@@ -206,3 +209,62 @@ async function start(term, crn){
     // (async ()=>{
     //     console.log(await start("202430", "11247"));
     // }) ();
+ 
+//this function will ocasionally get and update the courses status
+ async function getDatabaseInfo(){
+    const client = await pool.connect();
+    try{
+        await client.query('BEGIN');
+
+        //
+        const status_list = await client.query('SELECT crn, status, term FROM courses');
+        console.log(status_list.rows)
+        
+        //const resultStatusPromises = (status_list.rows).map(async obj => await start(obj.term, `${obj.crn}`))
+        const resultStatusPromises = []
+
+        
+
+        for (let i = 0; i < status_list.rows.length; i++) {
+            const currentQuery = status_list.rows[i];
+            const newQuery = await start(currentQuery.term, `${currentQuery.crn}`)
+            resultStatusPromises.push(newQuery)
+
+            //update the database when necessary
+            if(!(currentQuery.status == newQuery[0].toUpperCase())){
+                if(currentQuery.status == 'OPEN' && newQuery[0] == 'Closed'){
+                    await updateCourses('CLOSED', `${currentQuery.crn}`, client)
+                }
+                else if(currentQuery.status == 'CLOSED' && newQuery[0] == 'Open'){
+                    await updateCourses('OPEN', `${currentQuery.crn}`, client)
+                    //add to the mailing list if the course just opened
+                    mailing_list.push(currentQuery.crn)
+                    console.log('added to mailing')
+                }
+            }
+        }
+
+        //const resultStatus = await Promise.all(resultStatusPromises);
+        console.log(resultStatusPromises);
+        console.log(mailing_list);
+
+        await client.query('COMMIT');
+
+    }   catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    }   finally {
+        client.release();
+    }
+ }
+ getDatabaseInfo()
+
+ //this function updates a course's status
+ async function updateCourses(status, crn, client){
+    //const client = await pool.connect();
+    const updateText = 'UPDATE courses SET status = $1 WHERE crn = $2';
+    const updateValues = [status, crn];
+    const result = await client.query(updateText, updateValues);
+    //client.release()
+    return result
+ }
