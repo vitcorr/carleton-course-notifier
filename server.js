@@ -78,8 +78,8 @@ app.post('/', async(req, res)=>{
     }
 })
 
-//MAILING LIST
-let mailing_list = []
+//open crn LIST
+let open_crn_list = []
 
 //transactions
 async function courseRegistration(userName, userEmail, crn, courseName, term){
@@ -218,7 +218,10 @@ async function start(term, crn){
 
         //
         const status_list = await client.query('SELECT crn, status, term FROM courses');
+        console.log('printing database info...line 221')
         console.log(status_list.rows)
+
+        
         
         //const resultStatusPromises = (status_list.rows).map(async obj => await start(obj.term, `${obj.crn}`))
         const resultStatusPromises = []
@@ -237,16 +240,18 @@ async function start(term, crn){
                 }
                 else if(currentQuery.status == 'CLOSED' && newQuery[0] == 'Open'){
                     await updateCourses('OPEN', `${currentQuery.crn}`, client)
-                    //add to the mailing list if the course just opened
-                    mailing_list.push(currentQuery.crn)
-                    console.log('added to mailing')
+                    //add to the open crn list list if the course just opened
+                    open_crn_list.push(currentQuery.crn)
+                    console.log('added to open crn list')
                 }
             }
         }
 
         //const resultStatus = await Promise.all(resultStatusPromises);
+        console.log('printing new status info...line 251')
         console.log(resultStatusPromises);
-        console.log(mailing_list);
+        console.log('printing crns that just opened...line 253')
+        console.log(open_crn_list);
 
         await client.query('COMMIT');
 
@@ -257,7 +262,6 @@ async function start(term, crn){
         client.release();
     }
  }
- getDatabaseInfo()
 
  //this function updates a course's status
  async function updateCourses(status, crn, client){
@@ -268,3 +272,31 @@ async function start(term, crn){
     //client.release()
     return result
  }
+
+ //function to get the emails to be notified, NEEDS FURTHER TESTING
+ async function getEmailList(array){
+    const client = await pool.connect();
+    const list_query_text = `
+    SELECT u.name AS user_name, u.email, c.name AS course_name, c.crn
+    FROM Users u
+    JOIN Registrations r ON u.user_id = r.user_id
+    JOIN Courses c ON r.crn = c.crn
+    WHERE c.crn = ANY($1);
+` 
+    // const query_values = [`${...array}`]
+    const xxx = [32705, 32706, 32719]
+    const query_values = [array]
+
+    const result = await client.query(list_query_text, query_values);
+    console.log('printing emails to be notified...line 289')
+    console.log(result.rows)
+    console.log('get emails works')
+
+    client.release()
+    //return []
+ }
+
+ //CALL STACK
+ getDatabaseInfo()
+ .then(() => getEmailList(open_crn_list))
+ .catch(err => console.log('Error: ',err.stack))
