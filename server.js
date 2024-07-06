@@ -189,7 +189,7 @@ async function start(term, crn, browser){
 
     const info = await page.$eval('div > table > tbody > tr', el => el.innerText)
     //registration status = [course status, course name ]
-    const registrationStatus = [info.split("\t")[1], info.split("\t")[5]]
+    const registrationStatus = [info.split("\t")[1], info.split("\t")[3] + " (" +info.split("\t")[5]+")"]
     // console.log(info)
     // console.log(registrationStatus)
 
@@ -221,7 +221,7 @@ async function start(term, crn, browser){
         const latest_course_results = []
 
         //start the browser to begin search
-        const browser = await puppeteer.launch({headless: false})
+        const browser = await puppeteer.launch({headless: true})
         //loop through the courses from the database
         for (let i = 0; i < status_list.rows.length; i++) {
             const currentQuery = status_list.rows[i];
@@ -284,7 +284,8 @@ async function start(term, crn, browser){
     const result = await client.query(list_query_text, query_values);
     console.log('printing emails to be notified...line 294')
     console.log(result.rows)
-    emails_list.push(result.rows)
+    //emails_list.push(result.rows)
+    emails_list = result.rows
     console.log('get emails works')
 
     client.release()
@@ -292,20 +293,21 @@ async function start(term, crn, browser){
  }
 
  //app password = nyux bjlm pxnf nmbm
- async function sendEmail(){
+ async function sendEmail(user_name, user_email, course_name, crn){
     var transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: 'victor.kolaw@gmail.com',
-          
+          pass: ''
         }
     })
 
     var mailOptions = {
         from: 'victor.kolaw@gmail.com',
-        to: 'kolawoledamilola06@gmail.com',
-        subject: 'Sending Email using Node.js',
-        text: 'That was easy!'
+        to: user_email,
+        subject: 'Open Seat in Course Requested',
+        text: `Hello ${user_name} \n A seat just opened up in ${course_name}. Register ASAP before the seat is taken!
+         you are getting this email because you created a reminder for the course with CRN: ${crn}`
     };
 
     transporter.sendMail(mailOptions, function(error, info){
@@ -328,14 +330,26 @@ async function start(term, crn, browser){
 // await start('202510', '11247', browser)
 // browser.close()})();
 
-async function main(){
-    await getDatabaseInfo();
-    await getEmailList(open_crn_list);
-    //await sendEmail()
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-    //clear the lists after each run
-    open_crn_list = []
-    emails_list = []
+async function main(){
+    while (true){
+        await getDatabaseInfo();
+        await getEmailList(open_crn_list);
+
+        for (let i = 0; i < emails_list.length; i++) {
+            const element = emails_list[i];
+            await sendEmail(element.user_name, element.email, element.course_name, element.crn)
+        }
+    
+        //clear the lists after each run
+        open_crn_list = []
+        emails_list = []
+        // 10 minutes = 10 * 60 * 1000 milliseconds
+        await delay(10000);
+    }
 }
 
 main()
