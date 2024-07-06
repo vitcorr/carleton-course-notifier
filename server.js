@@ -3,6 +3,7 @@ const fs = require('fs/promises');
 const express = require('express')
 const pool = require('./database.js')
 const app = express()
+const nodemailer = require('nodemailer')
 
 //middleware
 app.use(express.static("public"))
@@ -57,8 +58,10 @@ app.post('/', async(req, res)=>{
     //start(req.body.term, req.body.crn)
 
     //CHECK IF REQUEST IS VALID
-    const check = await start(user.term, user.crn);
-    if (check[0] === "Open" || check[0] === "Closed") {
+    const browser = await puppeteer.launch({headless: false})
+    const check = await start(user.term, user.crn, browser);
+    browser.close();
+    if (check[0] === "Open" || check[0] === "Closed") {//-----!UPDATE LOGIC FOR WAITLIST AND OTHERS!-----
         try {
             const registrationAdded = await courseRegistration(user.name, user.email, user.crn, check[1], user.term)
             if (registrationAdded) {
@@ -78,8 +81,10 @@ app.post('/', async(req, res)=>{
     }
 })
 
-//open crn LIST
+//LIST OF CRNS THAT JUST OPENED
 let open_crn_list = []
+//list of emails to be notified
+let emails_list = []
 
 //transactions
 async function courseRegistration(userName, userEmail, crn, courseName, term){
@@ -152,8 +157,7 @@ async function courseRegistration(userName, userEmail, crn, courseName, term){
 
 }
 
-async function start(term, crn){
-    const browser = await puppeteer.launch({headless: true})
+async function start(term, crn, browser){
     const page = await browser.newPage()
     await page.goto('https://central.carleton.ca/prod/bwysched.p_select_term?wsea_code=EXT')
 
@@ -162,36 +166,27 @@ async function start(term, crn){
     // const term = '202510';
     // const crn = '11247';
 
-    const names = await page.evaluate(() =>{
-        return Array.from(document.querySelectorAll("#term_code > option")).map(x => x.textContent)
-    })
-    await fs.writeFile("name.txt", names.join("\r\n"))
-
     //Select the term
     await page.select('select[name="term_code"]', term);
-    //await page.screenshot({path: "screenshots/amazing.png"})
 
     // Click the submit button
     await Promise.all([
         page.click('input[type="submit"][value="Proceed to Search"]'),
-        page.waitForNavigation()
+        page.waitForNavigation(),
     ]);
-    
+
 
 
     //NEXT PAGE 
     //CRn DINOSAURS = 21525
     await page.type("#crn_id", crn)
-    page.click('input[type="submit"][value="Search"]')
 
     // Click the SEARCH button
     await Promise.all([
         page.click('input[type="submit"][value="Search"]'),
-        page.waitForNavigation()
+        page.waitForNavigation(),
     ]);
 
-    //console.log('New Page URL:', page.url());
-    //PRINT STATUS
     const info = await page.$eval('div > table > tbody > tr', el => el.innerText)
     //registration status = [course status, course name ]
     const registrationStatus = [info.split("\t")[1], info.split("\t")[5]]
@@ -199,7 +194,7 @@ async function start(term, crn){
     // console.log(registrationStatus)
 
     //close puppeteer browser
-    browser.close()
+    //browser.close()
     return registrationStatus;
 }
 
@@ -212,45 +207,44 @@ async function start(term, crn){
  
 //this function will ocasionally get and update the courses status
  async function getDatabaseInfo(){
+    //connect to the database
     const client = await pool.connect();
     try{
         await client.query('BEGIN');
 
-        //
+        //get all the courses from the database
         const status_list = await client.query('SELECT crn, status, term FROM courses');
         console.log('printing database info...line 221')
         console.log(status_list.rows)
 
-        
-        
-        //const resultStatusPromises = (status_list.rows).map(async obj => await start(obj.term, `${obj.crn}`))
-        const resultStatusPromises = []
+        //list to store the latest course results
+        const latest_course_results = []
 
-        
-
+        //start the browser to begin search
+        const browser = await puppeteer.launch({headless: false})
+        //loop through the courses from the database
         for (let i = 0; i < status_list.rows.length; i++) {
             const currentQuery = status_list.rows[i];
-            const newQuery = await start(currentQuery.term, `${currentQuery.crn}`)
-            resultStatusPromises.push(newQuery)
+            const newQuery = await start(currentQuery.term, `${currentQuery.crn}`, browser)
+            latest_course_results.push(newQuery)
 
-            //update the database when necessary
+            //update the database when necessary -----!UPDATE LOGIC FOR WAITLIST AND OTHERS!-----
             if(!(currentQuery.status == newQuery[0].toUpperCase())){
                 if(currentQuery.status == 'OPEN' && newQuery[0] == 'Closed'){
                     await updateCourses('CLOSED', `${currentQuery.crn}`, client)
                 }
                 else if(currentQuery.status == 'CLOSED' && newQuery[0] == 'Open'){
                     await updateCourses('OPEN', `${currentQuery.crn}`, client)
-                    //add to the open crn list list if the course just opened
+                    //add to the open crn list if the course just opened
                     open_crn_list.push(currentQuery.crn)
                     console.log('added to open crn list')
                 }
             }
         }
-
-        //const resultStatus = await Promise.all(resultStatusPromises);
-        console.log('printing new status info...line 251')
-        console.log(resultStatusPromises);
-        console.log('printing crns that just opened...line 253')
+        browser.close()
+        console.log('printing new status info...line 254')
+        console.log(latest_course_results);
+        console.log('printing crns that just opened...line 256')
         console.log(open_crn_list);
 
         await client.query('COMMIT');
@@ -288,15 +282,60 @@ async function start(term, crn){
     const query_values = [array]
 
     const result = await client.query(list_query_text, query_values);
-    console.log('printing emails to be notified...line 289')
+    console.log('printing emails to be notified...line 294')
     console.log(result.rows)
+    emails_list.push(result.rows)
     console.log('get emails works')
 
     client.release()
     //return []
  }
 
+ //app password = nyux bjlm pxnf nmbm
+ async function sendEmail(){
+    var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'victor.kolaw@gmail.com',
+          
+        }
+    })
+
+    var mailOptions = {
+        from: 'victor.kolaw@gmail.com',
+        to: 'kolawoledamilola06@gmail.com',
+        subject: 'Sending Email using Node.js',
+        text: 'That was easy!'
+    };
+
+    transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+    });
+ }
+
  //CALL STACK
- getDatabaseInfo()
- .then(() => getEmailList(open_crn_list))
- .catch(err => console.log('Error: ',err.stack))
+//  getDatabaseInfo()
+//  .then(() => getEmailList(open_crn_list))
+//  .catch(err => console.log('Error: ',err.stack))
+//sendEmail();
+
+// (async()=> {const browser =  await puppeteer.launch({headless: false})
+
+// await start('202510', '11247', browser)
+// browser.close()})();
+
+async function main(){
+    await getDatabaseInfo();
+    await getEmailList(open_crn_list);
+    //await sendEmail()
+
+    //clear the lists after each run
+    open_crn_list = []
+    emails_list = []
+}
+
+main()
