@@ -13,9 +13,7 @@ function submitButton(){
         alert('Please enter your name')
         return;
     }
-    // const btn = document.createElement("span")
-    // btn.innerHTML = term + crn
-    // document.body.appendChild(btn);
+    
     console.log(term)
     const data = {term, crn, email, name};
 
