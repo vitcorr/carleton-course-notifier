@@ -4,6 +4,7 @@ const express = require('express')
 const pool = require('./database.js')
 const app = express()
 const nodemailer = require('nodemailer')
+require("dotenv").config();
 
 //middleware
 app.use(express.static("public"))
@@ -271,7 +272,7 @@ async function start(term, crn, browser){
         service: 'gmail',
         auth: {
           user: 'victor.kolaw@gmail.com',
-          pass: ''
+          pass: process.env.PASS
         }
     })
 
@@ -279,7 +280,7 @@ async function start(term, crn, browser){
         from: 'victor.kolaw@gmail.com',
         to: user_email,
         subject: 'Open Seat in Course Requested',
-        text: `Hello ${user_name} \n A seat/WaitList just opened up in ${course_name}. Register ASAP before the seat is taken!
+        text: `Hello ${user_name},\n \n \tA seat/WaitList just opened up in ${course_name}. Register ASAP before the seat is taken!
         You are getting this email because you created a reminder for the course with CRN: ${crn}`
     };
 
