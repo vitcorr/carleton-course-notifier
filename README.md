@@ -1,4 +1,4 @@
-# Carleton University Course Notifier (IN PROGRESS)
+# Carleton University Course Notifier
 
 This project is a reminder service that notifies you when a seat opens up in any class of your choice at Carleton University
 
