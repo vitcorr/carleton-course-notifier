@@ -14,11 +14,6 @@ app.listen(3000, ()=>{
 
 });
 
-//connect database
-// client.connect()
-// .then(() => console.log('Connected to PostgreSQL database'))
-// .catch(error => console.error('Error connecting to the database:', error));
-
 
 //routes
 app.get('/', (req, res)=>{
@@ -43,25 +38,17 @@ app.get('/database', (req, res)=>{
     //client.end();
 })
 
-// app.get('/database', async(req, res)=>{
-//     console.log('hello')
-//     const result1 = await client.query('SELECT * FROM users');
-//     res.send(result1.rows)
-//     //client.end();
-// })
 
 app.post('/', async(req, res)=>{
     console.log('NEW INCOMING REGISTRATION ATTEMPT')
     console.log(req.body);
     const user = req.body;
-    //let insertQuery = `INSERT INTO Users (name, email) VALUES('${user.name}', '${user.email}')`
-    //start(req.body.term, req.body.crn)
 
     //CHECK IF REQUEST IS VALID
-    const browser = await puppeteer.launch({headless: false})
+    const browser = await puppeteer.launch({headless: true})
     const check = await start(user.term, user.crn, browser);
     browser.close();
-    if (check[0] === "Open" || check[0] === "Closed") {//-----!UPDATE LOGIC FOR WAITLIST AND OTHERS!-----
+    if (!(check[1] === 'undefined (undefined)')) {
         try {
             const registrationAdded = await courseRegistration(user.name, user.email, user.crn, check[1], user.term)
             if (registrationAdded) {
@@ -161,11 +148,6 @@ async function start(term, crn, browser){
     const page = await browser.newPage()
     await page.goto('https://central.carleton.ca/prod/bwysched.p_select_term?wsea_code=EXT')
 
-    //inputs
-    //summer: 202420, fall: 202430, winter: 202510 
-    // const term = '202510';
-    // const crn = '11247';
-
     //Select the term
     await page.select('select[name="term_code"]', term);
 
@@ -175,10 +157,7 @@ async function start(term, crn, browser){
         page.waitForNavigation(),
     ]);
 
-
-
     //NEXT PAGE 
-    //CRn DINOSAURS = 21525
     await page.type("#crn_id", crn)
 
     // Click the SEARCH button
@@ -198,12 +177,6 @@ async function start(term, crn, browser){
     return registrationStatus;
 }
 
-// Example usage:
-// const term = '202510';
-    // const crn = '11247';
-    // (async ()=>{
-    //     console.log(await start("202430", "11247"));
-    // }) ();
  
 //this function will ocasionally get and update the courses status
  async function getDatabaseInfo(){
@@ -229,22 +202,23 @@ async function start(term, crn, browser){
             latest_course_results.push(newQuery)
 
             //update the database when necessary -----!UPDATE LOGIC FOR WAITLIST AND OTHERS!-----
-            if(!(currentQuery.status == newQuery[0].toUpperCase())){
-                if(currentQuery.status == 'OPEN' && newQuery[0] == 'Closed'){
+            
+                if(currentQuery.status == 'OPEN' && newQuery[0] != 'Open' && newQuery[0] != 'Waitlist Open'){
                     await updateCourses('CLOSED', `${currentQuery.crn}`, client)
+                    console.log("updated db with new closed status")
                 }
-                else if(currentQuery.status == 'CLOSED' && newQuery[0] == 'Open'){
+                else if(currentQuery.status == 'CLOSED' && (newQuery[0] === 'Open' || newQuery[0] === 'Waitlist Open')){
                     await updateCourses('OPEN', `${currentQuery.crn}`, client)
                     //add to the open crn list if the course just opened
                     open_crn_list.push(currentQuery.crn)
                     console.log('added to open crn list')
                 }
-            }
+            
         }
         browser.close()
-        console.log('printing new status info...line 254')
+        console.log('printing new status info...line 245')
         console.log(latest_course_results);
-        console.log('printing crns that just opened...line 256')
+        console.log('printing crns that just opened...line 247')
         console.log(open_crn_list);
 
         await client.query('COMMIT');
@@ -292,7 +266,6 @@ async function start(term, crn, browser){
     //return []
  }
 
- //app password = nyux bjlm pxnf nmbm
  async function sendEmail(user_name, user_email, course_name, crn){
     var transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -306,8 +279,8 @@ async function start(term, crn, browser){
         from: 'victor.kolaw@gmail.com',
         to: user_email,
         subject: 'Open Seat in Course Requested',
-        text: `Hello ${user_name} \n A seat just opened up in ${course_name}. Register ASAP before the seat is taken!
-         you are getting this email because you created a reminder for the course with CRN: ${crn}`
+        text: `Hello ${user_name} \n A seat/WaitList just opened up in ${course_name}. Register ASAP before the seat is taken!
+        You are getting this email because you created a reminder for the course with CRN: ${crn}`
     };
 
     transporter.sendMail(mailOptions, function(error, info){
@@ -319,16 +292,6 @@ async function start(term, crn, browser){
     });
  }
 
- //CALL STACK
-//  getDatabaseInfo()
-//  .then(() => getEmailList(open_crn_list))
-//  .catch(err => console.log('Error: ',err.stack))
-//sendEmail();
-
-// (async()=> {const browser =  await puppeteer.launch({headless: false})
-
-// await start('202510', '11247', browser)
-// browser.close()})();
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
