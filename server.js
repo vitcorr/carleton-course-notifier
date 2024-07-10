@@ -3,6 +3,7 @@ const fs = require('fs/promises');
 const express = require('express')
 const pool = require('./database.js')
 const app = express()
+const port = process.env.PORTEX || 3000;
 const nodemailer = require('nodemailer')
 require("dotenv").config();
 
@@ -10,8 +11,8 @@ require("dotenv").config();
 app.use(express.static("public"))
 app.use(express.json({limit: '1mb'}))
 
-app.listen(3000, ()=>{
-    console.log('Server listening on port 3000 \nhttp://localhost:3000/');
+app.listen(port, ()=>{
+    console.log(`Server listening on port ${port} \nhttp://localhost:3000/`);
 
 });
 
