@@ -5,7 +5,14 @@ function submitButton(){
     const email = document.getElementById('email').value
     const name = document.getElementById('name').value
 
-
+    if(email === ""){
+        alert('Enter a valid e-mail')
+        return;
+    }
+    else if(name === ""){
+        alert('Please enter your name')
+        return;
+    }
     // const btn = document.createElement("span")
     // btn.innerHTML = term + crn
     // document.body.appendChild(btn);
