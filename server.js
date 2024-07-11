@@ -47,7 +47,19 @@ app.post('/', async(req, res)=>{
     const user = req.body;
 
     //CHECK IF REQUEST IS VALID
-    const browser = await puppeteer.launch({headless: true})
+    const browser = await puppeteer.launch({
+        args: [
+            "--disable-setuid-sandbox",
+            "--no-sandbox",
+            "--single-process",
+            "--no-zygote",
+        ],
+        executablePath: 
+            process.env.NODE_ENV === 'production' 
+            ? process.env.PUPPETEER_EXECUTABLE_PATH
+            : puppeteer.executablePath(),
+
+        headless: true})
     const check = await start(user.term, user.crn, browser);
     browser.close();
     if (!(check[1] === 'undefined (undefined)')) {
@@ -196,7 +208,19 @@ async function start(term, crn, browser){
         const latest_course_results = []
 
         //start the browser to begin search
-        const browser = await puppeteer.launch({headless: true})
+        const browser = await puppeteer.launch({
+            args: [
+                "--disable-setuid-sandbox",
+                "--no-sandbox",
+                "--single-process",
+                "--no-zygote",
+            ],
+            executablePath: 
+                process.env.NODE_ENV === 'production' 
+                ? process.env.PUPPETEER_EXECUTABLE_PATH
+                : puppeteer.executablePath(),
+
+            headless: true})
         //loop through the courses from the database
         for (let i = 0; i < status_list.rows.length; i++) {
             const currentQuery = status_list.rows[i];
