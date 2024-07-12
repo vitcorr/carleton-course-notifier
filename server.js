@@ -24,17 +24,7 @@ app.get('/', (req, res)=>{
 
 //test database outputs
 /*this doesnt work for now, use async method*/
-app.get('/test-db', async (req, res) => {
-    try {
-        const client = await pool.connect();
-        const result = await client.query('SELECT NOW()');
-        res.send(result.rows);
-        client.release();
-    } catch (err) {
-        console.error(err);
-        res.send("Error " + err);
-    }
-});
+app.get('/test-db', main());
 
 
 
