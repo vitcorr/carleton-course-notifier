@@ -10,6 +10,6 @@ RUN npm ci
 COPY . .
 
 # Expose the port your app runs on
-EXPOSE 3000
+EXPOSE 10000
 
 CMD ["node", "server.js"]
