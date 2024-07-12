@@ -24,7 +24,16 @@ app.get('/', (req, res)=>{
 
 //test database outputs
 /*this doesnt work for now, use async method*/
-app.get('/test-db', main());
+app.get('/test-db', async (req, res) => {
+    try {
+        await main();
+        res.send('Database test initiated.'); // Optional response to indicate the test started
+    } catch (error) {
+        console.error('Error running database test:', error);
+        res.status(500).send('Error running database test.');
+    }
+});
+
 
 
 
