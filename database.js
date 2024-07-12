@@ -3,11 +3,7 @@ require("dotenv").config();
 
 
 const pool = new Pool({
-    host: process.env.HOST,
-    user: process.env.USER,
-    port: process.env.DB_PORT,
-    password: process.env.PASSWORD,
-    database: process.env.DATABASE,
+    connectionString: 'postgresql://carleton_course_notifier_render_user:MptxTAxZYn9gEPNHPb1NiQNdLrS46ljc@dpg-cq7ktclds78s73d8qbl0-a/carleton_course_notifier_render',
     ssl: true
 })
 
