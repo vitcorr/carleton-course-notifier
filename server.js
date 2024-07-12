@@ -24,21 +24,18 @@ app.get('/', (req, res)=>{
 
 //test database outputs
 /*this doesnt work for now, use async method*/
-app.get('/database', (req, res)=>{
-    console.log('hello')
-    client.query(`SELECT * FROM courses`, (err, result)=>{
-        console.log('pook')
-        if(err){
-            res.send("there was an error")
-            console.log(result.rows)
-            return;
-        }
-        res.send(result.rows)
-        console.log(result.rows)
+app.get('/test-db', async (req, res) => {
+    try {
+        const client = await pool.connect();
+        const result = await client.query('SELECT NOW()');
+        res.send(result.rows);
+        client.release();
+    } catch (err) {
+        console.error(err);
+        res.send("Error " + err);
+    }
+});
 
-    });
-    //client.end();
-})
 
 
 app.post('/', async(req, res)=>{
@@ -341,4 +338,3 @@ async function main(){
     }
 }
 
-main()
