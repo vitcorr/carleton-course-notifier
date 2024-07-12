@@ -17,7 +17,7 @@ function submitButton(){
     console.log(term)
     const data = {term, crn, email, name};
 
-    fetch('http://localhost:3000/', {
+    fetch('/', {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
