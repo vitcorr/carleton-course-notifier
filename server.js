@@ -240,7 +240,7 @@ async function start(term, crn, browser){
                 ? process.env.PUPPETEER_EXECUTABLE_PATH
                 : puppeteer.executablePath(),
 
-            headless: false})
+            headless: true})
         //loop through the courses from the database
         for (let i = 0; i < status_list.rows.length; i++) {
             const currentQuery = status_list.rows[i];
