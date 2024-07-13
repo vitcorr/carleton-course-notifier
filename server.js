@@ -24,13 +24,37 @@ app.get('/', (req, res)=>{
 
 //test database outputs
 /*this doesnt work for now, use async method*/
-app.get('/test-db', async (req, res) => {
+app.get('/start-script', async (req, res) => {
     try {
         await main();
-        res.send('Database test initiated.'); // Optional response to indicate the test started
+        res.send('script initiated.'); // Optional response to indicate the test started
     } catch (error) {
-        console.error('Error running database test:', error);
-        res.status(500).send('Error running database test.');
+        console.error('Error running script:', error);
+        res.status(500).send('Error running script:');
+    }
+});
+
+app.get('/test-db', async (req, res) => {
+    try {
+        const client = await pool.connect();
+        const result = await client.query('SELECT NOW()');
+        res.send(result.rows);
+        client.release();
+    } catch (err) {
+        console.error(err);
+        res.send("Error " + err);
+    }
+});
+
+app.get('/get-users', async (req, res) => {
+    try {
+        const client = await pool.connect();
+        const result = await client.query('SELECT * FROM USERS');
+        res.send(result.rows);
+        client.release();
+    } catch (err) {
+        console.error(err);
+        res.send("Error " + err);
     }
 });
 
@@ -183,7 +207,7 @@ async function start(term, crn, browser){
     // console.log(registrationStatus)
 
     //close puppeteer browser
-    //browser.close()
+    await page.close()
     return registrationStatus;
 }
 
@@ -216,7 +240,7 @@ async function start(term, crn, browser){
                 ? process.env.PUPPETEER_EXECUTABLE_PATH
                 : puppeteer.executablePath(),
 
-            headless: true})
+            headless: false})
         //loop through the courses from the database
         for (let i = 0; i < status_list.rows.length; i++) {
             const currentQuery = status_list.rows[i];
