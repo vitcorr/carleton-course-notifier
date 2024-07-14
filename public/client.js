@@ -1,15 +1,20 @@
 
+document.getElementById("Loading").style.visibility = "hidden";
+
 function submitButton(){
+    document.getElementById("Loading").style.visibility = "visible";
     const term = document.getElementById('term').value
     const crn = document.getElementById('CRN').value
     const email = document.getElementById('email').value
     const name = document.getElementById('name').value
 
     if(email === ""){
+        document.getElementById("Loading").style.visibility = "hidden";
         alert('Enter a valid e-mail')
         return;
     }
     else if(name === ""){
+        document.getElementById("Loading").style.visibility = "hidden";
         alert('Please enter your name')
         return;
     }
@@ -26,6 +31,10 @@ function submitButton(){
         body: JSON.stringify(data),
     })
     .then(res => res.text())
-    .then(data => alert(data))
+    .then(data => {
+        alert(data)
+        document.getElementById("Loading").style.visibility = "hidden";
+    })
     .catch(err => console.log('Error: ',err));
+
 }

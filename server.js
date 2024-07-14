@@ -28,7 +28,7 @@ app.get('/', (req, res)=>{
 /*this doesnt work for now, use async method*/
 app.get('/start-script', async (req, res) => {
     try {
-        await main();
+        main();
         res.send('script initiated.'); // Optional response to indicate the test started
     } catch (error) {
         console.error('Error running script:', error);
