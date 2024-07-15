@@ -24,16 +24,27 @@ app.get('/', (req, res)=>{
     res.render('index')
 })
 
-//test database outputs
-/*this doesnt work for now, use async method*/
+//script starter
+let script_check = false;
 app.get('/start-script', async (req, res) => {
     try {
-        main();
-        res.send('script initiated.'); // Optional response to indicate the test started
+        if(script_check){
+            res.send('script already running')
+        }else{
+            script_check = true;
+            main();
+            res.send('script initiated.'); // Optional response to indicate the test started
+        }
     } catch (error) {
         console.error('Error running script:', error);
         res.status(500).send('Error running script:');
     }
+});
+
+//stop the script
+app.get('/stop-script', async (req, res) => {
+    script_check = false;
+    res.send('stopping script...'); // Optional response to indicate the test started
 });
 
 app.get('/test-db', async (req, res) => {
@@ -345,7 +356,7 @@ function delay(ms) {
 }
 
 async function main(){
-    while (true){
+    while (script_check){
         await getDatabaseInfo();
         await getEmailList(open_crn_list);
 
@@ -360,6 +371,7 @@ async function main(){
         // 10 minutes = 10 * 60 * 1000 milliseconds
         await delay(10000);
     }
+    console.log('script ended')
 }
 
 //ping URL
