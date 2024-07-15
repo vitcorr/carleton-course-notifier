@@ -32,8 +32,8 @@ function submitButton(){
     })
     .then(res => res.text())
     .then(data => {
-        alert(data)
         document.getElementById("Loading").style.visibility = "hidden";
+        alert(data)
     })
     .catch(err => console.log('Error: ',err));
 

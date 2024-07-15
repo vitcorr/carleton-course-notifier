@@ -327,8 +327,7 @@ async function start(term, crn, browser){
         from: 'victor.kolaw@gmail.com',
         to: user_email,
         subject: 'Open Seat in Course Requested',
-        text: `Hello ${user_name},\n \n \tA seat/WaitList just opened up in ${course_name}. Register ASAP before the seat is taken!
-        You are getting this email because you created a reminder for the course with CRN: ${crn}`
+        text: `Hello ${user_name}, \n \tA seat/WaitList just opened up in ${course_name}. Register ASAP before the seat is taken! \n \tYou are getting this email because you created a reminder for the course with CRN: ${crn}`
     };
 
     transporter.sendMail(mailOptions, function(error, info){
@@ -365,7 +364,7 @@ async function main(){
 
 //ping URL
 const url = `https://carleton-course-notifier.onrender.com/`; // Replace with your Render URL
-const interval = 300000; // Interval in milliseconds (30 seconds)
+const interval = 300000; // Interval in milliseconds (5 mins)
 
 function reloadWebsite() {
   axios.get(url)
