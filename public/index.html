@@ -10,31 +10,38 @@
 </head>
  
 <body>
-    <h1>Welcome, this is a site to notify you when a Full/No waitlist class opens</h1>
-    <h3>Please enter your course details</h3>
-    <label for="TERM">Select a Term:</label>
-    <select name="TERM" id="term">
-        <option value="202430">Fall 2024 (September-December)</option>
-        <option value="202510">Winter 2025 (January-April)</option>
-        <option value="202420">Summer 2024 (May-August)</option>
-    </select> 
-    <br><br>
-    <label for="CRN">CRN:</label>
-    <input type="text" id = "CRN" name = "CRN">
-    <br><br>
-    <label for="name">Name:</label>
-    <input type="name" id = "name" name = "name">
-    <br><br>
-    <label for="email">E-mail Address:</label>
-    <input type="email" id = "email" name = "email">
-    <br><br>
-    <button id = "submit" onclick="submitButton()"> Submit</button>
+    <header>
+        <a href="favicon.ico">
+            <img src="favicon.ico" alt="">
+        </a>
+    </header>
+    <div class = 'main'>
+        <h1>Get notified when a Full/No Waitlist class opens at Carleton University</h1>
+        <h3>Please enter your course details</h3>
+        <label for="TERM">Select a Term:</label>
+        <select name="TERM" id="term">
+            <option value="202430">Fall 2024 (September-December)</option>
+            <option value="202510">Winter 2025 (January-April)</option>
+            <option value="202420">Summer 2024 (May-August)</option>
+        </select> 
+        <br><br>
+        <label for="CRN">Course CRN Number:</label>
+        <input type="text" id = "CRN" name = "CRN" placeholder="12345">
+        <br><br>
+        <label for="name">Your Name:</label>
+        <input type="name" id = "name" name = "name">
+        <br><br>
+        <label for="email">Your E-mail Address:</label>
+        <input type="email" id = "email" name = "email" placeholder="johndoe@gmail.com">
+        <br><br>
+        <button id = "submit" onclick="submitButton()"> Submit</button>
+    </div>
 
     <div id = "Loading" class="modal">
             <div class ="loader"></div>
         </div>
     
-      
+        
     <script src="client.js"></script>
 </body>
  

@@ -44,7 +44,7 @@ app.get('/start-script', async (req, res) => {
 //stop the script
 app.get('/stop-script', async (req, res) => {
     script_check = false;
-    res.send('stopping script...'); // Optional response to indicate the test started
+    res.send('stopping script...'); // Optional response to indicate the test stopped
 });
 
 app.get('/test-db', async (req, res) => {
