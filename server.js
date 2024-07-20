@@ -311,7 +311,6 @@ async function start(term, crn, browser){
     WHERE c.crn = ANY($1);
 ` 
     // const query_values = [`${...array}`]
-    const xxx = [32705, 32706, 32719]
     const query_values = [array]
 
     const result = await client.query(list_query_text, query_values);
@@ -329,13 +328,13 @@ async function start(term, crn, browser){
     var transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: 'victor.kolaw@gmail.com',
+          user: 'mailitnotifier@gmail.com',
           pass: process.env.PASS
         }
     })
 
     var mailOptions = {
-        from: 'victor.kolaw@gmail.com',
+        from: 'mailitnotifier@gmail.com',
         to: user_email,
         subject: 'Open Seat in Course Requested',
         text: `Hello ${user_name}, \n \tA seat/WaitList just opened up in ${course_name}. Register ASAP before the seat is taken! \n \tYou are getting this email because you created a reminder for the course with CRN: ${crn}`

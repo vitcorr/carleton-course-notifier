@@ -11,6 +11,7 @@ body{
 }
 
 .main input{
+    width: auto;
     border-radius: 5px;
     border-color: red;
     border-style: solid;
@@ -26,6 +27,13 @@ body{
     font-weight: bold;
     padding: 10px;
 
+}
+
+#img-logo{
+    position: relative;
+    right: 47%;
+    width: 5%;
+    height: 10%
 }
 
 #submit{
