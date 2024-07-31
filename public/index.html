@@ -35,11 +35,25 @@
         <input type="email" id = "email" name = "email" placeholder="johndoe@gmail.com">
         <br><br>
         <button id = "submit" onclick="submitButton()"> Submit</button>
-        <div>
+        <div id="example">
             <p>Don't know your courses' CRN number? It is the 5 digit number on the registration page on Carleton Central</p>
-            <p>Click the Carleton Logo to go to Carleton Central</p>
+            <p>Example: 30939 for CHEM 1001</p>
+            <img src="crn_demo.JPG" alt="CRN example">
+            <p>Click <a href="https://central.carleton.ca" target="_blank">here</a> to go to Carleton Central.</p>
+
         </div>
         
+
+        <div class="feedback">
+            <form method='POST'action="https://getform.io/f/akkgenpa">
+                <h2 id="collabtext">Feel free to leave any feedback, suggestions and improvements you'd like to see</h2>
+                <input type="text" placeholder='Name' name='name' />
+                <br><br>
+                <textarea name="message" rows= 10 placeholder='Message'></textarea>
+                <br><br>
+                <button id="collab">Send</button>
+            </form>
+        </div>
     </div>
 
     <div id = "Loading" class="modal">

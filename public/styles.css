@@ -36,7 +36,7 @@ body{
     height: 10%
 }
 
-#submit{
+button{
     background-color: red;
     color: white ;
     padding-left: 10%;
@@ -47,10 +47,59 @@ body{
     font-weight: bold;
 }
 
-#submit:hover{
+button:hover{
     color: red;
     background-color: white;
     cursor:pointer;
+}
+
+   
+img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+h1{
+    font-size: large;
+}
+
+@media (min-width: 640px) {
+    h1 {
+        font-size: x-large;
+    }
+}
+    
+
+
+.main .feedback{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 70vh;
+}
+
+#example{
+    margin-top: 50px;
+}
+
+form{
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#collabtext{
+    display: inline;
+}
+textarea{
+    width: auto;
+    border-radius: 5px;
+    border-color: red;
+    border-style: solid;
+    border-width: 3px;
+    padding: 10px;
 }
 
 .modal{
