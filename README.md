@@ -2,6 +2,8 @@
 
 This project is a reminder service that notifies you when a seat opens up in any class of your choice at Carleton University
 
+Available online at https://carleton-course-notifier.onrender.com/
+
 ## Features
 
 - Monitor multiple courses simultaneously
