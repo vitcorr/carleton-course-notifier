@@ -25,7 +25,7 @@ app.get('/', (req, res)=>{
 })
 
 //script starter
-let script_check = false;
+let script_check = true;
 app.get('/start-script', async (req, res) => {
     try {
         if(script_check){
@@ -372,6 +372,8 @@ async function main(){
     }
     console.log('script ended')
 }
+
+main();
 
 //ping URL
 const url = `https://carleton-course-notifier.onrender.com/`; // Replace with your Render URL
