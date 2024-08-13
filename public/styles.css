@@ -10,6 +10,20 @@ body{
     font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
+.content{
+    display: flex;
+    flex-direction: column;
+    margin-left: 30%;
+    margin-right: 30%;
+}
+
+.error{
+    color: #e62020;
+    margin: 0%;
+    font-family: 'Times New Roman', Times, serif;
+    visibility: hidden;
+}
+
 .main input{
     width: auto;
     border-radius: 5px;

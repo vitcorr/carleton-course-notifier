@@ -18,23 +18,32 @@
     <div class = 'main'>
         <h1>Get notified when a Full/No Waitlist class opens at Carleton University</h1>
         <h3>Please enter your course details</h3>
-        <label for="TERM">Select a Term:</label>
-        <select name="TERM" id="term">
-            <option value="202430">Fall 2024 (September-December)</option>
-            <option value="202510">Winter 2025 (January-April)</option>
-            <option value="202420">Summer 2024 (May-August)</option>
-        </select> 
-        <br><br>
-        <label for="CRN">Course CRN Number:</label>
-        <input type="text" id = "CRN" name = "CRN" placeholder="12345">
-        <br><br>
-        <label for="name">Your Name:</label>
-        <input type="name" id = "name" name = "name">
-        <br><br>
-        <label for="email">Your E-mail Address:</label>
-        <input size="40" type="email" id = "email" name = "email" placeholder="avoid @cmail.carleton.ca. @gmail recommended">
-        <br><br>
-        <button id = "submit" onclick="submitButton()"> Submit</button>
+        <div class = content>
+            <label for="TERM">Select a Term:</label>
+            <select name="TERM" id="term">
+                <option value="202430">Fall 2024 (September-December)</option>
+                <option value="202510">Winter 2025 (January-April)</option>
+                <option value="202420">Summer 2024 (May-August)</option>
+            </select> 
+            <br><br>
+            <label for="CRN">Course CRN Number:</label>
+            <input type="text" id = "CRN" name = "CRN" placeholder="12345">
+            <p class="error" id="error_crn">Enter a valid CRN</p>
+            <br><br>
+
+            <label for="name">Your Name:</label>
+            <input type="name" id = "name" name = "name">
+            <p class="error" id="error_name">Please enter a name</p>
+            <br><br>
+
+            <label for="email">Your E-mail Address:</label>
+            <input size="40" type="email" id = "email" name = "email" placeholder="avoid @cmail.carleton.ca. @gmail recommended">
+            <p class="error" id="error_email">Enter a valid email</p>
+            <br><br>
+
+            <button id = "submit" onclick="submitButton()"> Submit</button>
+        </div>
+        
         <div id="example">
             <p>Don't know your courses' CRN number? It is the 5 digit number on the registration page on Carleton Central</p>
             <p>Example: 30939 for CHEM 1001</p>
