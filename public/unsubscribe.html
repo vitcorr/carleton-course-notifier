@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unsubscribe from Service</title>
+</head>
+<body>
+    <div>
+        <h3 id="unsubText">hime</h3>
+        <button id="unsubButton" onclick="unsubscribe()">Unsubscribe</button><br><br>
+        <a href="https://carleton-course-notifier.onrender.com/">Go back to main page</a>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search)
+        const course_name = params.get('course_name')
+        document.getElementById('unsubText').innerHTML = `Are you sure you'd like to permanently stop receiving email notifications when a spot opens up for ${course_name}`
+
+        function unsubscribe(){
+            const name = params.get('name')
+            const email = params.get('email')
+            const crn = params.get('crn')
+            const data = {name,email,crn}
+            console.log(data)
+
+            fetch('/unsubscribe', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(res => res.text())
+            .then(data => {
+                alert(data)
+            })
+            .catch(err => console.log('Error: ',err));
+            
+        }
+    </script>
+</body>
+</html>

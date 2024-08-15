@@ -7,14 +7,17 @@ const port = process.env.PORT || 3000;
 const nodemailer = require('nodemailer')
 require("dotenv").config();
 const axios = require('axios');
-
+let link;
+process.env.LEVEL === 'PRODUCTION' 
+? link = 'https://carleton-course-notifier.onrender.com'
+: link = 'http://localhost:3000'
 
 //middleware
 app.use(express.static("public"))
 app.use(express.json({limit: '1mb'}))
 
 app.listen(port, ()=>{
-    console.log(`Server listening on port ${port} \nhttp://localhost:3000/`);
+    console.log(`Server listening on port ${port} \n${link}`);
 
 });
 
@@ -71,6 +74,20 @@ app.get('/get-users', async (req, res) => {
     }
 });
 
+app.get('/unsubscribe', async (req,res) =>{
+    try {
+        console.log('NEW INCOMING UNSUBSCRIPTION ATTEMPT')
+        console.log(req.params)
+        const user = req.body;
+        console.log(user)
+        res.sendFile(__dirname + '/public/unsubscribe.html');
+        //unregisterUserFromCourse(user.email, user.crn);
+
+    } catch (error) {
+        console.log(error);
+    }
+})
+
 
 
 
@@ -112,6 +129,18 @@ app.post('/', async(req, res)=>{
     else{    
         res.send('Invalid CRN or TERM. Make sure the CRN is correct and matches the Semester');
         console.log("invalid crn/term combo")
+    }
+})
+
+app.post('/unsubscribe', async(req, res)=>{
+    const user = req.body;
+    console.log(user)
+    const status = await unregisterUserFromCourse(user.email, user.crn);
+    console.log(status);
+    if(status){
+        res.status(200).send('You have unregistered from this course succesfully!')
+    }else{
+        res.status(200).send('An error occured, reach out to mailitnotifier@gmail.com or submit a feedback on the home page')
     }
 })
 
@@ -337,7 +366,10 @@ async function start(term, crn, browser){
         from: 'mailitnotifier@gmail.com',
         to: user_email,
         subject: 'Open Seat in Course Requested',
-        text: `Hello ${user_name}, \n \tA seat/WaitList just opened up in ${course_name}. Register ASAP before the seat is taken! \n \tYou are getting this email because you created a reminder for the course with CRN: ${crn}`
+        //text: `Hello ${user_name}, \n \tA seat/WaitList just opened up in ${course_name}. Register ASAP before the seat is taken! \n \tYou are getting this email because you created a reminder for the course with CRN: ${crn}\n \t To unsubscribe from notifications for this particular course/tutorial section, click here`
+        html: `<h1>Hello ${user_name}, </h1><br><p>A seat/WaitList just opened up in ${course_name}. </p> <p>Register ASAP before the seat is taken!</p> 
+                <p>You are getting this email because you created a reminder for the course with CRN: ${crn}</p> 
+                <br><p>To unsubscribe from notifications for this particular course/tutorial section, Click <a href="${link}/unsubscribe?name=vic&email=${user_email}&crn=${crn}&course_name=${course_name}" target="_blank">here</a> </p></p>`
     };
 
     transporter.sendMail(mailOptions, function(error, info){
@@ -348,7 +380,64 @@ async function start(term, crn, browser){
         }
     });
  }
+ 
+const unregisterUserFromCourse = async (email, crn) => {
+    let unregistered = false;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
+      // Step 1: Find the user's ID based on their email
+        const userResult = await client.query(`
+        SELECT user_id FROM Users WHERE email = $1
+      `, [email]);
+  
+      if (userResult.rows.length === 0) {
+        throw new Error('User not found');
+      }
+  
+      const userId = userResult.rows[0].user_id;
+    
+      // Step 2: Check if the user is registered for the course
+        const registrationResult = await client.query(
+        'SELECT 1 FROM Registrations WHERE user_id = $1 AND crn = $2',
+        [userId, crn]
+      );
+  
+      if (registrationResult.rows.length === 0) {
+        console.log('User is not registered for this course');
+        return unregistered;
+      }
+      
+      // Step 3: Delete the user's registration for the course
+      await client.query(`
+        DELETE FROM Registrations
+        WHERE user_id = $1 AND crn = $2;
+      `, [userId, crn]);
+  
+      // Step 4: Check if there are any remaining registrations for the course and delete the course if none exist
+      await client.query(`
+        DELETE FROM Courses
+        WHERE crn = $1 AND NOT EXISTS (
+            SELECT 1
+            FROM Registrations
+            WHERE crn = $1
+        );
+      `, [crn]);
+  
+      await client.query('COMMIT');
+      console.log('User unregistered and course deleted if no other registrations exist');
+      unregistered = true;
+    } catch (e) {
+      await client.query('ROLLBACK');
+      console.error('Error unregistering user from course and deleting course', e.stack);
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    return unregistered;
+};
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
