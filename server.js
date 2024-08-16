@@ -77,9 +77,6 @@ app.get('/get-users', async (req, res) => {
 app.get('/unsubscribe', async (req,res) =>{
     try {
         console.log('NEW INCOMING UNSUBSCRIPTION ATTEMPT')
-        console.log(req.params)
-        const user = req.body;
-        console.log(user)
         res.sendFile(__dirname + '/public/unsubscribe.html');
         //unregisterUserFromCourse(user.email, user.crn);
 
@@ -116,12 +113,12 @@ app.post('/', async(req, res)=>{
         try {
             const registrationAdded = await courseRegistration(user.name, user.email, user.crn, check[1], user.term)
             if (registrationAdded) {
-              res.send('User registered for the course');
+              res.send('Success! You will receive an email notification when a spot opens up in this course');
             } else {
               res.send('You already have an active reminder for this course');
             }
           } catch (e) {
-            res.status(500).send('Error registering user for the course');
+            res.status(500).send('An error occurred. Please try again later or leave a feedback request if it happens again');
             console.error('Error registering user for the course', e.stack);
           }
         
