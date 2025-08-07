@@ -3,10 +3,12 @@ const fs = require('fs/promises');
 const express = require('express')
 const pool = require('./database.js')
 const app = express()
+const cors = require('cors');
 const port = process.env.PORT || 3000;
 const nodemailer = require('nodemailer')
 require("dotenv").config();
 const axios = require('axios');
+
 let link;
 process.env.LEVEL === 'PRODUCTION' 
 ? link = 'https://carleton-course-notifier.onrender.com'
@@ -15,6 +17,11 @@ process.env.LEVEL === 'PRODUCTION'
 //middleware
 app.use(express.static("public"))
 app.use(express.json({limit: '1mb'}))
+// enabling CORS for some specific origins only.
+let corsOptions = {
+   origin : ['http://localhost:5173', 'https://coursenotifier.onrender.com/'],
+}
+app.use(cors(corsOptions));
 
 app.listen(port, ()=>{
     console.log(`Server listening on port ${port} \n${link}`);
@@ -477,3 +484,57 @@ function reloadWebsite() {
 
 
 setInterval(reloadWebsite, interval);
+
+//untested utility functions
+
+//delete a term and its associated information. useful for when registration closes for a term
+const deleteCoursesAndRegistrationsByTerm = async (term) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+  
+      // Step 1: Delete registrations associated with the courses
+      await client.query(`
+        DELETE FROM Registrations
+        USING Courses
+        WHERE Registrations.crn = Courses.crn
+          AND Courses.term = $1;
+      `, [term]);
+  
+      // Step 2: Delete courses with the specified term
+      await client.query(`
+        DELETE FROM Courses
+        WHERE term = $1;
+      `, [term]);
+  
+      await client.query('COMMIT');
+      console.log(`Courses and registrations for term ${term} deleted successfully.`);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error deleting courses and registrations:', error.stack);
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    //db query
+    /**
+     * -- Step 1: Delete registrations associated with the courses
+        DELETE FROM Registrations
+        USING Courses
+        WHERE Registrations.crn = Courses.crn
+        AND Courses.term = '202430';
+
+        -- Step 2: Delete courses with the term 202430
+        DELETE FROM Courses
+        WHERE term = '202430';
+     */
+
+          // Example usage
+        deleteCoursesAndRegistrationsByTerm('202430')
+        .then(() => console.log('Deletion complete'))
+        .catch((error) => console.error('Deletion failed', error));
+  };
+  
+
+  
