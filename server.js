@@ -19,7 +19,7 @@ app.use(express.static("public"))
 app.use(express.json({limit: '1mb'}))
 // enabling CORS for some specific origins only.
 let corsOptions = {
-   origin : ['http://localhost:5173', 'https://coursenotifier.onrender.com/'],
+   origin : ['http://localhost:5173', 'https://coursenotifier.onrender.com'],
 }
 app.use(cors(corsOptions));
 
